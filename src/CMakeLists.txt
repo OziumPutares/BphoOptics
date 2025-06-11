@@ -1,2 +1,8 @@
-add_subdirectory(sample_library)
-add_subdirectory(ftxui_sample)
+add_subdirectory(glad)
+#
+
+##############################
+########## MY STUFF ##########
+##############################
+add_subdirectory(openGLAbstractions)
+add_subdirectory(main)

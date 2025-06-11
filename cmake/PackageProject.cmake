@@ -175,14 +175,4 @@ function(myproject_package_project)
     "${_oneValueArgs};EXPORT_DESTINATION;INSTALL_DESTINATION;NAMESPACE;VARS_PREFIX;EXPORT"
     MULTIVAR_ARGS
     "${_multiValueArgs};DEPENDENCIES;PRIVATE_DEPENDENCIES")
-
-  # download ycm
-  FetchContent_Declare(_ycm URL https://github.com/robotology/ycm/archive/refs/tags/v0.13.0.zip)
-  FetchContent_GetProperties(_ycm)
-  FetchContent_MakeAvailable(_ycm)
-  include("${_ycm_SOURCE_DIR}/modules/InstallBasicPackageFiles.cmake")
-
-  install_basic_package_files(${_PackageProject_NAME} "${_FARGS_LIST}")
-
-  include("${_ycm_SOURCE_DIR}/modules/AddUninstallTarget.cmake")
 endfunction()
