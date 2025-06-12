@@ -28,7 +28,14 @@ add_test(NAME cli.version_matches COMMAND intro --version)
 set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
 
 add_executable(tests tests.cpp)
-target_link_libraries(tests PRIVATE myproject::myproject_warnings myproject::myproject_options Catch2::Catch2WithMain)
+target_link_libraries(
+  tests
+  PRIVATE myproject::myproject_warnings
+          myproject::myproject_options
+          Catch2::Catch2WithMain
+          OpenGL::openGL-Renderer
+          OpenGL::GL
+          glad::glad)
 
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(
