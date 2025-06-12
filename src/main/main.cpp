@@ -5,21 +5,17 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
-#include <memory>
 #include <renderer/vector/vector.hpp>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
-#include <algorithm>
 #include <chrono>
-#include <concepts>
-#include <cstddef>
 #include <iostream>
+#include <renderer/drawer/drawer.hpp>
 #include <renderer/shader/shader.hpp>
 #include <sstream>
 #include <string>
 #include <utility>
-#include <variant>
 namespace {
 // NOLINTBEGIN
 std::string ReadFile(std::filesystem::path location)
@@ -40,11 +36,11 @@ void GLAPIENTRY DebugCallback(GLenum source,
   // Ignore non-significant or ignored IDs
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-  spdlog::log(GLEnumErrorSeverityToSpdLog(severity),
+  spdlog::log(renderer::GLEnumErrorSeverityToSpdLog(severity),
     "OpenGL Debug Message: Source: {}; Type: {}; Message: "
     "{}",
-    GetSourceString(source),
-    GetTypeString(type),
+    renderer::GetSourceString(source),
+    renderer::GetTypeString(type),
     message);
 }
 // NOLINTEND
@@ -66,73 +62,7 @@ void FramebufferSizeCallback(GLFWwindow * /*window*/, int width, int height)
   glViewport(0, 0, width, height);
 }
 
-template<typename T> struct Triangle
-{
-  Vector2<T> corner1{};
-  Vector2<T> corner2{};
-  Vector2<T> corner3{};
-};
 
-struct DrawingConcept
-{
-  DrawingConcept() = default;
-  DrawingConcept(DrawingConcept const &) = default;
-  DrawingConcept(DrawingConcept &&) = default;
-  DrawingConcept &operator=(DrawingConcept const &) = default;
-  DrawingConcept &operator=(DrawingConcept &&) = default;
-  virtual void Draw(GLFWwindow const &window, std::chrono::nanoseconds) const = 0;
-  virtual ~DrawingConcept() = default;
-};
-
-template<typename Func>
-  requires std::is_invocable_v<Func, GLFWwindow const &, std::chrono::nanoseconds>
-class ConcreteDrawer : DrawingConcept
-{
-  Func m_drawStrategy{};
-
-public:
-  explicit ConcreteDrawer(Func function) : m_drawStrategy(std::move(function)) {}
-  void Draw(GLFWwindow const &window, std::chrono::nanoseconds delta_time) const override
-  {
-    m_drawStrategy(window, delta_time);
-  }
-};
-constexpr std::size_t kBytesForStackDrawer{ 128 };
-class DrawerClass
-{
-  std::variant<std::unique_ptr<DrawingConcept>, std::array<std::byte, kBytesForStackDrawer>> m_concreteDrawHolder;
-
-public:
-  template<typename Func>
-    requires std::invocable<Func, GLFWwindow const &, std::chrono::nanoseconds>
-  explicit DrawerClass(Func drawing_function)
-  {
-    // NOLINTNEXTLINE
-    if constexpr (sizeof(ConcreteDrawer<Func>) <= kBytesForStackDrawer) {
-      m_concreteDrawHolder = std::array<std::byte, kBytesForStackDrawer>{};
-      std::construct_at(
-        // NOLINTNEXTLINE
-        reinterpret_cast<ConcreteDrawer<Func> *>(
-          std::addressof(std::get<std::array<std::byte, kBytesForStackDrawer>>(m_concreteDrawHolder))),
-        // NOLINTNEXTLINE
-        ConcreteDrawer<Func>(drawing_function));
-    } else {
-      m_concreteDrawHolder.emplace(std::unique_ptr(ConcreteDrawer(drawing_function)));
-    }
-  }
-  // NOLINTNEXTLINE
-  void Draw(GLFWwindow const &window, std::chrono::nanoseconds delta_time)
-  {
-    // NOLINTNEXTLINE
-    if (std::holds_alternative<std::unique_ptr<DrawingConcept>>(m_concreteDrawHolder)) {
-      std::get<std::unique_ptr<DrawingConcept>>(m_concreteDrawHolder)->Draw(window, delta_time);
-    } else {
-      // NOLINTNEXTLINE
-      reinterpret_cast<DrawingConcept *>(&std::get<std::array<std::byte, kBytesForStackDrawer>>(m_concreteDrawHolder))
-        ->Draw(window, delta_time);
-    }
-  }
-};
 }// namespace
 
 // NOLINTNEXTLINE
@@ -173,13 +103,13 @@ int main()
     glDebugMessageCallback(DebugCallback, nullptr);
     // NOLINTNEXTLINE
     auto Positions = std::array{
-      Vector3<float>{ { -1.0F, -1.0F, 0.0F } },
-      Vector3<float>{ { 1.0F, 0.0F, 0.0F } },
-      Vector3<float>{ { 0.0F, -1.0F, 0.0F } },
-      Vector3<float>{ { 0.0F, 1.0F, 0.0F } },
+      renderer::Vector3<float>{ { -1.0F, -1.0F, 0.0F } },
+      renderer::Vector3<float>{ { 1.0F, 0.0F, 0.0F } },
+      renderer::Vector3<float>{ { 0.0F, -1.0F, 0.0F } },
+      renderer::Vector3<float>{ { 0.0F, 1.0F, 0.0F } },
       // NOLINTNEXTLINE
-      Vector3<float>{ { 0.0F, -0.5F, 0.0F } },
-      Vector3<float>{ { 0.0F, 0.0F, 1.0F } },
+      renderer::Vector3<float>{ { 0.0F, -0.5F, 0.0F } },
+      renderer::Vector3<float>{ { 0.0F, 0.0F, 1.0F } },
     };
     std::cout << Positions[0].X();
     unsigned int buffer;// NOLINT
@@ -189,16 +119,16 @@ int main()
 
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, std::size(Positions) * sizeof(Vector2<float>), &Positions, GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3<float>) * 2, nullptr);
+    glBufferData(GL_ARRAY_BUFFER, std::size(Positions) * sizeof(renderer::Vector2<float>), &Positions, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(renderer::Vector3<float>) * 2, nullptr);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1,
       3,
       GL_FLOAT,
       GL_FALSE,
-      sizeof(Vector3<float>) * 2,
+      sizeof(renderer::Vector3<float>) * 2,
       // NOLINTNEXTLINE
-      reinterpret_cast<void *>(sizeof(Vector3<float>)));
+      reinterpret_cast<void *>(sizeof(renderer::Vector3<float>)));
     glEnableVertexAttribArray(1);
     auto VertexShaderUnit = renderer::gl::ShaderUnit<GL_VERTEX_SHADER>(
       ReadFile(std::filesystem::current_path() / "glsl" / "newBaseVertexShader.vert.glsl"));
@@ -211,14 +141,14 @@ int main()
     // Set initial viewport
     glViewport(0, 0, WindowWidth, WindowHeight);
 
-    DrawerClass ClearDrawer(
+    Drawer ClearDrawer(
       []([[maybe_unused]] GLFWwindow const &window, [[maybe_unused]] std::chrono::nanoseconds delta_time) {
         // NOLINTNEXTLINE
         glClearColor(0.2F, 0.3F, 0.3F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT);
       });
-    DrawerClass TriangleDrawer([&Program, &VAO]([[maybe_unused]] GLFWwindow const &window,
-                                 [[maybe_unused]] std::chrono::nanoseconds delta_time) {
+    Drawer TriangleDrawer([&Program, &VAO]([[maybe_unused]] GLFWwindow const &window,
+                            [[maybe_unused]] std::chrono::nanoseconds delta_time) {
       Program.Use();
       glBindVertexArray(VAO);
       glDrawArrays(GL_TRIANGLES, 0, 3);

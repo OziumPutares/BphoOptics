@@ -1,6 +1,6 @@
 include(GenerateExportHeader)
 
-add_library(openGL-Renderer shader.cpp)
+add_library(openGL-Renderer shader.cpp error.cpp)
 
 add_library(OpenGL::openGL-Renderer ALIAS openGL-Renderer)
 
