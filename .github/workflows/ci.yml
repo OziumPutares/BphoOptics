@@ -34,7 +34,7 @@ jobs:
         compiler:
           # you can specify the version after `-` like "llvm-20.0.2".
           - llvm-20       # Fixed: llvm-20 doesn't exist
-          - gcc-15        # Fixed: gcc-15 doesn't exist
+          - gcc-14        # Fixed: gcc-15 doesn't exist
         generator:
           - "Ninja Multi-Config"
         build_type:
@@ -49,12 +49,12 @@ jobs:
         exclude:
           # mingw is determined by this author to be too buggy to support
           - os: windows-2022  # Fixed to match the OS above
-            compiler: gcc-15  # Fixed to match compiler version
+            compiler: gcc-14  # Fixed to match compiler version
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
           # if you try to use a compiler that does not have gcov set
-          - compiler: gcc-15  # Fixed version
+          - compiler: gcc-14  # Fixed version
             gcov_executable: gcov
             enable_ipo: On
 
@@ -72,7 +72,7 @@ jobs:
 
           # This exists solely to make sure a non-multiconfig build works
           - os: ubuntu-24.04  # Fixed to match OS above
-            compiler: gcc-15  # Fixed version
+            compiler: gcc-14  # Fixed version
             generator: "Unix Makefiles"
             build_type: Debug
             gcov_executable: gcov
@@ -140,7 +140,7 @@ jobs:
           ninja: true
           vcpkg: false
           ccache: true
-          clangtidy: ${{ env.CLANG_TIDY_VERSION }}
+          clangtidy: true
           cppcheck: true
           gcovr: true
           opencppcoverage: true
