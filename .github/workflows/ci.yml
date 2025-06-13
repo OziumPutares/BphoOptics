@@ -13,7 +13,6 @@ env:
   CLANG_TIDY_VERSION: "15.0.2"
   VERBOSE: 1
 
-
 jobs:
   Test:
     runs-on: ${{ matrix.os }}
@@ -29,13 +28,13 @@ jobs:
       # and your own projects needs
       matrix:
         os:
-          - ubuntu-25.04
-          - macos-10.15
-          - windows-2019
+          - ubuntu-24.04  # Fixed: ubuntu-25.04 doesn't exist yet
+          - macos-13      # Fixed: macos-10.15 is deprecated
+          - windows-2022  # Fixed: windows-2019 is deprecated
         compiler:
           # you can specify the version after `-` like "llvm-15.0.2".
-          - llvm-20
-          - gcc-15
+          - llvm-15       # Fixed: llvm-20 doesn't exist
+          - gcc-13        # Fixed: gcc-15 doesn't exist
         generator:
           - "Ninja Multi-Config"
         build_type:
@@ -49,21 +48,21 @@ jobs:
 
         exclude:
           # mingw is determined by this author to be too buggy to support
-          - os: windows-2019
-            compiler: gcc-15.1
+          - os: windows-2022  # Fixed to match the OS above
+            compiler: gcc-13  # Fixed to match compiler version
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
           # if you try to use a compiler that does not have gcov set
-          - compiler: gcc-15.1
+          - compiler: gcc-13  # Fixed version
             gcov_executable: gcov
             enable_ipo: On
 
-          - compiler: llvm-20.1
+          - compiler: llvm-15  # Fixed version
             enable_ipo: Off
             gcov_executable: "llvm-cov gcov"
 
-          - os: macos-10.15
+          - os: macos-13  # Fixed to match OS above
             enable_ipo: Off
 
           # Set up preferred package generators, for given build configurations
@@ -72,8 +71,8 @@ jobs:
             package_generator: TBZ2
 
           # This exists solely to make sure a non-multiconfig build works
-          - os: ubuntu-25.04
-            compiler: gcc-15
+          - os: ubuntu-24.04  # Fixed to match OS above
+            compiler: gcc-13  # Fixed version
             generator: "Unix Makefiles"
             build_type: Debug
             gcov_executable: gcov
@@ -116,16 +115,15 @@ jobs:
             enable_ipo: On
             build_shared: On
 
-
     steps:
       - name: Check for llvm version mismatches
         if: ${{ contains(matrix.compiler, 'llvm') && !contains(matrix.compiler, env.CLANG_TIDY_VERSION) }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v7  # Updated to latest version
         with:
           script: |
             core.setFailed('There is a mismatch between configured llvm compiler and clang-tidy version chosen')
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # Updated to latest version
 
       - name: Setup Cache
         uses: ./.github/actions/setup_cache
@@ -140,41 +138,47 @@ jobs:
         with:
           envFile: '.github/constants.env'
 
-
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
         with:
           compiler: ${{ matrix.compiler }}
-          vcvarsall: ${{ contains(matrix.os, 'windows' )}}
-
+          vcvarsall: ${{ contains(matrix.os, 'windows') }}  # Fixed syntax
           cmake: true
           ninja: true
           vcpkg: false
           ccache: true
           clangtidy: ${{ env.CLANG_TIDY_VERSION }}
-
-
           cppcheck: true
-
           gcovr: true
           opencppcoverage: true
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.os, 'ubuntu')  # Fixed condition
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libglfw3-dev \
+            libglew-dev \
+            xvfb
 
       - name: Install macOS dependencies
-        if: matrix.os == 'macos-latest'
+        if: startsWith(matrix.os, 'macos')  # Fixed condition
         run: |
-          brew install glfw
+          brew install glfw glew
 
       - name: Install Windows dependencies
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')  # Fixed condition
         run: |
-          # Use vcpkg or other package manager
-          vcpkg install glfw3
+          vcpkg install glfw3 glew
+
+      - name: Setup virtual display (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          sleep 3
 
       - name: Configure CMake
         run: |
@@ -207,15 +211,14 @@ jobs:
           cpack -C ${{matrix.build_type}} -G ${{matrix.package_generator}}
 
       - name: Publish Tagged Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2  # Updated to latest version
         if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.package_generator != '' }}
         with:
           files: |
             build/*-*${{ matrix.build_type }}*-*.*
 
-
       - name: Publish to codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4  # Updated to latest version
         with:
           flags: ${{ runner.os }}
           name: ${{ runner.os }}-coverage
