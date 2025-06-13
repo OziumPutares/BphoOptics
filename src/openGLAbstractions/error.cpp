@@ -1,6 +1,5 @@
 #include <renderer/error/error.hpp>
 #include <spdlog/common.h>
-#include <stdexcept>
 
 char const *renderer::GetTypeString(GLenum type)
 {
@@ -29,7 +28,7 @@ char const *renderer::GetTypeString(GLenum type)
 }
 spdlog::level::level_enum renderer::GLEnumErrorSeverityToSpdLog(GLenum severity)
 {
-  spdlog::level::level_enum Level{};
+  spdlog::level::level_enum Level{ spdlog::level::info };
   if (severity == GL_DEBUG_SEVERITY_HIGH) {
     Level = spdlog::level::level_enum::critical;
   } else if (severity == GL_DEBUG_SEVERITY_MEDIUM) {
@@ -37,7 +36,6 @@ spdlog::level::level_enum renderer::GLEnumErrorSeverityToSpdLog(GLenum severity)
   } else if (severity == GL_DEBUG_SEVERITY_LOW) {
     Level = spdlog::level::level_enum::warn;
   } else {
-    throw std::runtime_error("Invalid severity enum provided");
   }
   return Level;
 }

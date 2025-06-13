@@ -4,7 +4,16 @@ add_library(openGL-Renderer shader.cpp error.cpp)
 
 add_library(OpenGL::openGL-Renderer ALIAS openGL-Renderer)
 
-target_link_libraries(openGL-Renderer PRIVATE myproject_options myproject_warnings)
+target_link_libraries(
+  openGL-Renderer
+  PRIVATE myproject_options
+          myproject_warnings
+          fmt::fmt
+          spdlog::spdlog
+          lefticus::tools
+          glfw
+          OpenGL::GL
+          glad::glad)
 
 target_include_directories(openGL-Renderer ${WARNING_GUARD} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                                                                    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
