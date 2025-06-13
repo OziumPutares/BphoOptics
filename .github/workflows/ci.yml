@@ -29,13 +29,13 @@ jobs:
       # and your own projects needs
       matrix:
         os:
-          - ubuntu-20.04
+          - ubuntu-25.04
           - macos-10.15
           - windows-2019
         compiler:
           # you can specify the version after `-` like "llvm-15.0.2".
-          - llvm-15.0.2
-          - gcc-11
+          - llvm-20
+          - gcc-15
         generator:
           - "Ninja Multi-Config"
         build_type:
@@ -50,16 +50,16 @@ jobs:
         exclude:
           # mingw is determined by this author to be too buggy to support
           - os: windows-2019
-            compiler: gcc-11
+            compiler: gcc-15.1
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
           # if you try to use a compiler that does not have gcov set
-          - compiler: gcc-11
+          - compiler: gcc-15.1
             gcov_executable: gcov
             enable_ipo: On
 
-          - compiler: llvm-15.0.2
+          - compiler: llvm-20.1
             enable_ipo: Off
             gcov_executable: "llvm-cov gcov"
 
@@ -72,8 +72,8 @@ jobs:
             package_generator: TBZ2
 
           # This exists solely to make sure a non-multiconfig build works
-          - os: ubuntu-20.04
-            compiler: gcc-11
+          - os: ubuntu-25.04
+            compiler: gcc-15
             generator: "Unix Makefiles"
             build_type: Debug
             gcov_executable: gcov
@@ -158,6 +158,23 @@ jobs:
 
           gcovr: true
           opencppcoverage: true
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libglfw3-dev
+
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install glfw
+
+      - name: Install Windows dependencies
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Use vcpkg or other package manager
+          vcpkg install glfw3
 
       - name: Configure CMake
         run: |
