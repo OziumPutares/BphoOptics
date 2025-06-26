@@ -33,8 +33,8 @@ jobs:
           - windows-2022  # Fixed: windows-2019 is deprecated
         compiler:
           # you can specify the version after `-` like "llvm-20.0.2".
-          - llvm-20       # Fixed: llvm-20 doesn't exist
-          - gcc-14        # Fixed: gcc-15 doesn't exist
+          - llvm-19       # Fixed: llvm-20 doesn't exist
+          - gcc-15        # Fixed: gcc-15 doesn't exist
         generator:
           - "Ninja Multi-Config"
         build_type:
