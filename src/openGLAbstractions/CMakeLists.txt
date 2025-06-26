@@ -26,7 +26,10 @@ set_target_properties(
              CXX_VISIBILITY_PRESET hidden
              VISIBILITY_INLINES_HIDDEN YES)
 
-generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/*)
+generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/drawer/drawer.hpp)
+generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/colour/colour.hpp)
+generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/plot/linePlot.hpp)
+generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/shader/shader.hpp)
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(openGL-Renderer PUBLIC SAMPLE_LIBRARY_STATIC_DEFINE)
