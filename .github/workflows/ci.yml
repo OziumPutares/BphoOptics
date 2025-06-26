@@ -28,13 +28,13 @@ jobs:
       # and your own projects needs
       matrix:
         os:
-          - ubuntu-24.04  # Fixed: ubuntu-25.04 doesn't exist yet
-          - macos-13      # Fixed: macos-10.15 is deprecated
-          - windows-2022  # Fixed: windows-2019 is deprecated
+          - ubuntu-24.04
+          - macos-13
+          - windows-2022
         compiler:
-          # you can specify the version after `-` like "llvm-20.0.2".
-          - llvm-19       # Fixed: llvm-20 doesn't exist
-          - gcc-15        # Fixed: gcc-15 doesn't exist
+          # you can specify the version after `-` like "llvm-19.0.0".
+          - llvm-19
+          - gcc-15
         generator:
           - "Ninja Multi-Config"
         build_type:
@@ -48,21 +48,21 @@ jobs:
 
         exclude:
           # mingw is determined by this author to be too buggy to support
-          - os: windows-2022  # Fixed to match the OS above
-            compiler: gcc-14  # Fixed to match compiler version
+          - os: windows-2022
+            compiler: gcc-15
 
         include:
           # Add appropriate variables for gcov version required. This will intentionally break
           # if you try to use a compiler that does not have gcov set
-          - compiler: gcc-14  # Fixed version
+          - compiler: gcc-15
             gcov_executable: gcov
             enable_ipo: On
 
-          - compiler: llvm-20  # Fixed version
+          - compiler: llvm-19
             enable_ipo: Off
             gcov_executable: "llvm-cov gcov"
 
-          - os: macos-13  # Fixed to match OS above
+          - os: macos-13
             enable_ipo: Off
 
           # Set up preferred package generators, for given build configurations
@@ -71,8 +71,8 @@ jobs:
             package_generator: TBZ2
 
           # This exists solely to make sure a non-multiconfig build works
-          - os: ubuntu-24.04  # Fixed to match OS above
-            compiler: gcc-14  # Fixed version
+          - os: ubuntu-24.04
+            compiler: gcc-15
             generator: "Unix Makefiles"
             build_type: Debug
             gcov_executable: gcov
@@ -116,7 +116,7 @@ jobs:
             build_shared: On
 
     steps:
-      - uses: actions/checkout@v4  # Updated to latest version
+      - uses: actions/checkout@v4
 
       - name: Setup Cache
         uses: ./.github/actions/setup_cache
@@ -135,7 +135,7 @@ jobs:
         uses: aminya/setup-cpp@v1
         with:
           compiler: ${{ matrix.compiler }}
-          vcvarsall: ${{ contains(matrix.os, 'windows') }}  # Fixed syntax
+          vcvarsall: ${{ contains(matrix.os, 'windows') }}
           cmake: true
           ninja: true
           vcpkg: false
@@ -146,7 +146,7 @@ jobs:
           opencppcoverage: true
 
       - name: Install Linux dependencies
-        if: startsWith(matrix.os, 'ubuntu')  # Fixed condition
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -157,12 +157,12 @@ jobs:
             xvfb
 
       - name: Install macOS dependencies
-        if: startsWith(matrix.os, 'macos')  # Fixed condition
+        if: startsWith(matrix.os, 'macos')
         run: |
           brew install glfw glew
 
       - name: Install Windows dependencies
-        if: startsWith(matrix.os, 'windows')  # Fixed condition
+        if: startsWith(matrix.os, 'windows')
         run: |
           vcpkg install glfw3 glew
 
@@ -204,14 +204,14 @@ jobs:
           cpack -C ${{matrix.build_type}} -G ${{matrix.package_generator}}
 
       - name: Publish Tagged Release
-        uses: softprops/action-gh-release@v2  # Updated to latest version
+        uses: softprops/action-gh-release@v2
         if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.package_generator != '' }}
         with:
           files: |
             build/*-*${{ matrix.build_type }}*-*.*
 
       - name: Publish to codecov
-        uses: codecov/codecov-action@v4  # Updated to latest version
+        uses: codecov/codecov-action@v4
         with:
           flags: ${{ runner.os }}
           name: ${{ runner.os }}-coverage
