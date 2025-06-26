@@ -154,25 +154,4 @@ function(myproject_package_project)
 
   unset(_PackageProject_TARGETS)
 
-  # download ForwardArguments
-  FetchContent_Declare(
-    _fargs
-    URL https://github.com/polysquare/cmake-forward-arguments/archive/8c50d1f956172edb34e95efa52a2d5cb1f686ed2.zip)
-  FetchContent_GetProperties(_fargs)
-  if(NOT _fargs_POPULATED)
-    FetchContent_Populate(_fargs)
-  endif()
-  include("${_fargs_SOURCE_DIR}/ForwardArguments.cmake")
-
-  # prepare the forward arguments for ycm
-  set(_FARGS_LIST)
-  cmake_forward_arguments(
-    _PackageProject
-    _FARGS_LIST
-    OPTION_ARGS
-    "${_options};"
-    SINGLEVAR_ARGS
-    "${_oneValueArgs};EXPORT_DESTINATION;INSTALL_DESTINATION;NAMESPACE;VARS_PREFIX;EXPORT"
-    MULTIVAR_ARGS
-    "${_multiValueArgs};DEPENDENCIES;PRIVATE_DEPENDENCIES")
 endfunction()

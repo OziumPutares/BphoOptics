@@ -9,7 +9,7 @@ function(myproject_setup_dependencies)
   # already been provided to us by a parent project
 
   if(NOT TARGET fmtlib::fmtlib)
-    cpmaddpackage("gh:fmtlib/fmt#9.1.0")
+    cpmaddpackage("gh:fmtlib/fmt#11.2.0")
   endif()
 
   if(NOT TARGET spdlog::spdlog)
@@ -17,7 +17,7 @@ function(myproject_setup_dependencies)
       NAME
       spdlog
       VERSION
-      1.11.0
+      1.15.3
       GITHUB_REPOSITORY
       "gabime/spdlog"
       OPTIONS
@@ -25,22 +25,19 @@ function(myproject_setup_dependencies)
   endif()
 
   if(NOT TARGET Catch2::Catch2WithMain)
-    cpmaddpackage("gh:catchorg/Catch2@3.3.2")
+    cpmaddpackage("gh:catchorg/Catch2@3.8.1")
   endif()
 
-  if(NOT TARGET CLI11::CLI11)
-    cpmaddpackage("gh:CLIUtils/CLI11@2.3.2")
-  endif()
   if(NOT Freetype::Freetype)
     cpmaddpackage(
       NAME
       freetype
       GIT_REPOSITORY
-      https://github.com/aseprite/freetype2.git
+      https://gitlab.freedesktop.org/freetype/freetype.git
       GIT_TAG
-      VER-2-10-0
+      VER-2-13-3
       VERSION
-      2.10.0)
+      2.13.3)
 
     if(freetype_ADDED)
       add_library(Freetype::Freetype ALIAS freetype)
@@ -80,6 +77,15 @@ function(myproject_setup_dependencies)
   endif()
   if(NOT TARGET tools::tools)
     cpmaddpackage("gh:lefticus/tools#update_build_system")
+  endif()
+  if(NOT TARGET glm::glm)
+    cpmaddpackage(
+      NAME
+      glm
+      GITHUB_REPOSITORY
+      g-truc/glm
+      GIT_TAG
+      1.0.1)
   endif()
 
 endfunction()

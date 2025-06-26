@@ -5,24 +5,25 @@
 
 namespace {
 
-[[nodiscard]] auto sum_values(const uint8_t *Data, size_t Size)
+[[nodiscard]] auto SumValues(uint8_t const *data, size_t size)
 {
-  constexpr auto scale = 1000;
+  constexpr auto kScale = 1000;
 
-  int value = 0;
-  for (std::size_t offset = 0; offset < Size; ++offset) {
-    value += static_cast<int>(*std::next(Data, static_cast<long>(offset))) * scale;
+  int Value = 0;
+  for (std::size_t Offset = 0; Offset < size; ++Offset) {
+    Value +=
+      static_cast<int>(*std::next(data, static_cast<long>(Offset))) * kScale;
   }
-  return value;
+  return Value;
 }
 }// namespace
 
 // Fuzzer that attempts to invoke undefined behavior for signed integer overflow
 // cppcheck-suppress unusedFunction symbolName=LLVMFuzzerTestOneInput
 namespace {
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
+extern "C" int LLVMFuzzerTestOneInput(uint8_t const *data, size_t size)
 {
-  fmt::print("Value sum: {}, len{}\n", sum_values(Data, Size), Size);
+  fmt::print("Value sum: {}, len{}\n", SumValues(data, size), size);
   return 0;
 }
 }// namespace

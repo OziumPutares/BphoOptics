@@ -1,80 +1,73 @@
 #include <GLFW/glfw3.h>
-#include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
-#include <chrono>
 #include <concepts>
 #include <cstddef>
-#include <memory>
-#include <optional>
-#include <stdexcept>
-#include <utility>
-#include <variant>
+#include <functional>
+#include <tuple>
+#include <type_traits>
 
-constexpr std::size_t kBytesForStackDrawer{ 128 };
-struct DrawerConcept
+
+template<typename T> class Drawer;
+
+template<typename Ret, typename... Params>
+class [[nodiscard]] Drawer<Ret(Params...)>
 {
-  using DrawFuncHolderClass = std::optional<std::unique_ptr<DrawerConcept>>;
-  DrawerConcept() = default;
-  DrawerConcept(DrawerConcept const &) = default;
-  DrawerConcept(DrawerConcept &&) = default;
-  DrawerConcept &operator=(DrawerConcept const &) = default;
-  DrawerConcept &operator=(DrawerConcept &&) = default;
-  virtual void Draw(GLFWwindow const &window, std::chrono::nanoseconds) const = 0;
-  virtual ~DrawerConcept() = default;
-};
-
-template<typename Func>
-  requires std::is_invocable_v<Func, GLFWwindow const &, std::chrono::nanoseconds>
-class ConcreteDrawer : DrawerConcept
-{
-
-  Func m_drawStrategy{};
+  using Signature = Ret(Params...);
+  std::function<Signature> m_DrawStrategy;
 
 public:
-  explicit ConcreteDrawer(Func function) : m_drawStrategy(std::move(function)) {}
-  void Draw(GLFWwindow const &window, std::chrono::nanoseconds delta_time) const override
-  {
-    m_drawStrategy(window, delta_time);
-  }
-};
-class Drawer
-{
-  std::variant<std::unique_ptr<DrawerConcept>, std::array<std::byte, kBytesForStackDrawer>> m_concreteDrawHolder;
-
-public:
-  Drawer(Drawer const &other) = delete;
-  Drawer(Drawer &&) = default;
-  Drawer &operator=(const Drawer &other) = delete;
-  Drawer &operator=(Drawer &&) = default;
-  ~Drawer() = default;
   template<typename Func>
-    requires std::invocable<Func, GLFWwindow const &, std::chrono::nanoseconds>
-  explicit Drawer(Func drawing_function)
+  constexpr explicit Drawer(Func draw_strategy)
+    requires(std::is_invocable_r_v<Ret, Func, Params...>)
+    : m_DrawStrategy(draw_strategy)
+  {}
+  constexpr Drawer(Drawer const &other) = default;
+  constexpr Drawer(Drawer &&) = default;
+  constexpr Drawer &operator=(Drawer const &other) = default;
+  constexpr Drawer &operator=(Drawer &&) = default;
+  constexpr ~Drawer() = default;
+  // Draw
+  auto Draw(Params... args) -> Ret
+    requires(!std::same_as<Ret, void>)
   {
-    // NOLINTNEXTLINE
-    if constexpr (sizeof(ConcreteDrawer<Func>) <= kBytesForStackDrawer) {
-      m_concreteDrawHolder = std::array<std::byte, kBytesForStackDrawer>{};
-      std::construct_at(
-        // NOLINTNEXTLINE
-        reinterpret_cast<ConcreteDrawer<Func> *>(
-          std::addressof(std::get<std::array<std::byte, kBytesForStackDrawer>>(m_concreteDrawHolder))),
-        // NOLINTNEXTLINE
-        ConcreteDrawer<Func>(drawing_function));
-    } else {
-      m_concreteDrawHolder.emplace(std::unique_ptr(ConcreteDrawer(drawing_function)));
-    }
+    return m_DrawStrategy(args...);
   }
-  // NOLINTNEXTLINE
-  void Draw(GLFWwindow const &window, std::chrono::nanoseconds delta_time)
+  auto Draw(Params... args) -> Ret
+    requires(std::same_as<Ret, void>)
   {
-    // NOLINTNEXTLINE
-    if (std::holds_alternative<std::unique_ptr<DrawerConcept>>(m_concreteDrawHolder)) {
-      std::get<std::unique_ptr<DrawerConcept>>(m_concreteDrawHolder)->Draw(window, delta_time);
-    } else {
-      // NOLINTNEXTLINE
-      reinterpret_cast<DrawerConcept *>(&std::get<std::array<std::byte, kBytesForStackDrawer>>(m_concreteDrawHolder))
-        ->Draw(window, delta_time);
-    }
+    m_DrawStrategy(args...);
   }
+};
+
+template<typename T,
+  std::size_t Number,
+  template<typename, std::size_t> typename Container = std::array>
+class [[nodiscard]] Drawers;
+
+template<typename Ret,
+  typename... Params,
+  std::size_t Number,
+  template<typename, std::size_t> typename Container>
+class [[nodiscard]] Drawers<Ret(Params...), Number, Container>
+{
+  Container<Drawer<Ret(Params...)>, Number> m_Drawers;
+};
+
+template<typename T, typename Ret, typename... Args>
+concept Drawable = std::same_as<Drawer<Ret(Args...)>, T>;
+
+template<typename... Target>
+  requires(!std::same_as<Target, void> && ...)
+class DrawTarget
+{
+  std::atomic<bool> m_Enabled;
+  std::tuple<Target...> m_State;
+
+
+public:
+  explicit DrawTarget(Target... draw_target)
+    : m_State{ std::move(draw_target)... }
+  {}
 };

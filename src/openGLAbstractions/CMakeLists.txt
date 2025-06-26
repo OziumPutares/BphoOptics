@@ -26,7 +26,7 @@ set_target_properties(
              CXX_VISIBILITY_PRESET hidden
              VISIBILITY_INLINES_HIDDEN YES)
 
-generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/shader/shader.hpp)
+generate_export_header(openGL-Renderer EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/renderer/*)
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(openGL-Renderer PUBLIC SAMPLE_LIBRARY_STATIC_DEFINE)

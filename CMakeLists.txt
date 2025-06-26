@@ -22,6 +22,7 @@ project(
 
 include(cmake/PreventInSourceBuilds.cmake)
 include(ProjectOptions.cmake)
+include(cmake/Utilities.cmake)
 
 myproject_setup_options()
 

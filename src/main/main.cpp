@@ -5,7 +5,6 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
-#include <renderer/vector/vector.hpp>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 
@@ -13,17 +12,18 @@
 #include <iostream>
 #include <renderer/drawer/drawer.hpp>
 #include <renderer/shader/shader.hpp>
+#include <renderer/vector/vector.hpp>
 #include <sstream>
 #include <string>
 #include <utility>
 namespace {
-// NOLINTBEGIN
-std::string ReadFile(std::filesystem::path location)
+std::string ReadFile(std::filesystem::path const &location)
 {
-  std::stringstream ss;
-  ss << std::ifstream(location).rdbuf();
-  return ss.str();
+  std::stringstream TempBuffer;
+  TempBuffer << std::ifstream(location).rdbuf();
+  return TempBuffer.str();
 }
+// NOLINTBEGIN
 std::string ReadFile(auto...) = delete("No Implicit conversions allowed");
 void GLAPIENTRY DebugCallback(GLenum source,
   GLenum type,
@@ -81,7 +81,8 @@ int main()
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     // Create window
-    GLFWwindow *Window = glfwCreateWindow(WindowWidth, WindowHeight, "Resizable OpenGL Window", nullptr, nullptr);
+    GLFWwindow *Window = glfwCreateWindow(
+      WindowWidth, WindowHeight, "Resizable OpenGL Window", nullptr, nullptr);
     if (Window == nullptr) {
       std::cerr << "Failed to create GLFW window\n";
       glfwTerminate();
@@ -119,8 +120,12 @@ int main()
 
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, std::size(Positions) * sizeof(renderer::Vector2<float>), &Positions, GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(renderer::Vector3<float>) * 2, nullptr);
+    glBufferData(GL_ARRAY_BUFFER,
+      std::size(Positions) * sizeof(renderer::Vector2<float>),
+      &Positions,
+      GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(
+      0, 3, GL_FLOAT, GL_FALSE, sizeof(renderer::Vector3<float>) * 2, nullptr);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1,
       3,
@@ -131,28 +136,36 @@ int main()
       reinterpret_cast<void *>(sizeof(renderer::Vector3<float>)));
     glEnableVertexAttribArray(1);
     auto VertexShaderUnit = renderer::gl::ShaderUnit<GL_VERTEX_SHADER>(
-      ReadFile(std::filesystem::current_path() / "glsl" / "newBaseVertexShader.vert.glsl"));
+      ReadFile(std::filesystem::current_path() / "glsl"
+               / "newBaseVertexShader.vert.glsl"));
     auto FragmentShaderUnit = renderer::gl::ShaderUnit<GL_FRAGMENT_SHADER>(
-      ReadFile(std::filesystem::current_path() / "glsl" / "ourColourFragmentShader.frag.glsl"));
-    auto Program = renderer::gl::Program{ std::move(VertexShaderUnit), std::move(FragmentShaderUnit) };
+      ReadFile(std::filesystem::current_path() / "glsl"
+               / "ourColourFragmentShader.frag.glsl"));
+    auto Program = renderer::gl::Program{ std::move(VertexShaderUnit),
+      std::move(FragmentShaderUnit) };
     Program.Use();
 
 
     // Set initial viewport
     glViewport(0, 0, WindowWidth, WindowHeight);
 
-    Drawer ClearDrawer(
-      []([[maybe_unused]] GLFWwindow const &window, [[maybe_unused]] std::chrono::nanoseconds delta_time) {
+    using OpenGLDrawer =
+      Drawer<void(GLFWwindow const &, std::chrono::nanoseconds)>;
+    OpenGLDrawer ClearDrawer(
+      []([[maybe_unused]] GLFWwindow const &window,
+        [[maybe_unused]] std::chrono::nanoseconds delta_time) {
         // NOLINTNEXTLINE
         glClearColor(0.2F, 0.3F, 0.3F, 1.0F);
         glClear(GL_COLOR_BUFFER_BIT);
       });
-    Drawer TriangleDrawer([&Program, &VAO]([[maybe_unused]] GLFWwindow const &window,
-                            [[maybe_unused]] std::chrono::nanoseconds delta_time) {
-      Program.Use();
-      glBindVertexArray(VAO);
-      glDrawArrays(GL_TRIANGLES, 0, 3);
-    });
+
+    OpenGLDrawer TriangleDrawer(
+      [&Program, &VAO](GLFWwindow const & /*window*/,
+        [[maybe_unused]] std::chrono::nanoseconds delta_time) -> void {
+        Program.Use();
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+      });
     auto PreviousTime = std::chrono::system_clock::now();
     // Main loop
     while (glfwWindowShouldClose(Window) == 0) {
@@ -166,6 +179,7 @@ int main()
       // RENDER
       //
       TriangleDrawer.Draw(*Window, DeltaTime);
+
       // Swap buffers and poll events
       glfwSwapBuffers(Window);
       glfwPollEvents();
