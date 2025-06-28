@@ -73,7 +73,11 @@ function(myproject_setup_dependencies)
     set(FREETYPE_LIBRARIES Freetype::Freetype)
 
     # Add subdirectory
-    add_subdirectory(${imgui_SOURCE_DIR} EXCLUDE_FROM_ALL SYSTEM)
+    add_subdirectory(
+      ${imgui_SOURCE_DIR}
+      imgui
+      EXCLUDE_FROM_ALL
+      SYSTEM)
   endif()
   if(NOT TARGET tools::tools)
     cpmaddpackage("gh:lefticus/tools#update_build_system")

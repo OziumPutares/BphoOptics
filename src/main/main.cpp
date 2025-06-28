@@ -149,8 +149,8 @@ int main()
     // Set initial viewport
     glViewport(0, 0, WindowWidth, WindowHeight);
 
-    using OpenGLDrawer =
-      Drawer<void(GLFWwindow const &, std::chrono::nanoseconds)>;
+    using OpenGLDrawer = renderer::drawer::Drawer<void(
+      GLFWwindow const &, std::chrono::nanoseconds)>;
     OpenGLDrawer ClearDrawer(
       []([[maybe_unused]] GLFWwindow const &window,
         [[maybe_unused]] std::chrono::nanoseconds delta_time) {

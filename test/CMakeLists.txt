@@ -23,6 +23,7 @@ target_link_libraries(
   PRIVATE myproject::myproject_warnings
           myproject::myproject_options
           Catch2::Catch2WithMain
+          glfw
           OpenGL::openGL-Renderer
           OpenGL::GL
           glad::glad)
