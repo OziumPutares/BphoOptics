@@ -1,6 +1,6 @@
 #include <cstddef>
 #include <cstdint>
-#include <fmt/core.h>//NOLINT
+#include <fmt/base.h>
 #include <iterator>
 
 namespace {
@@ -21,7 +21,7 @@ namespace {
 // Fuzzer that attempts to invoke undefined behavior for signed integer overflow
 // cppcheck-suppress unusedFunction symbolName=LLVMFuzzerTestOneInput
 namespace {
-extern "C" int LLVMFuzzerTestOneInput(uint8_t const *data, size_t size)
+extern "C" auto LLVMFuzzerTestOneInput(uint8_t const *data, size_t size) -> int
 {
   fmt::print("Value sum: {}, len{}\n", SumValues(data, size), size);
   return 0;

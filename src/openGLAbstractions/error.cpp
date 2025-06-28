@@ -1,7 +1,7 @@
 #include <renderer/error/error.hpp>
 #include <spdlog/common.h>
 
-char const *renderer::GetTypeString(GLenum type)
+auto renderer::GetTypeString(GLenum type) -> char const *
 {
   switch (type) {
   case GL_DEBUG_TYPE_ERROR:
@@ -26,7 +26,8 @@ char const *renderer::GetTypeString(GLenum type)
     return "Unknown";
   }
 }
-spdlog::level::level_enum renderer::GLEnumErrorSeverityToSpdLog(GLenum severity)
+auto renderer::GLEnumErrorSeverityToSpdLog(GLenum severity)
+  -> spdlog::level::level_enum
 {
   spdlog::level::level_enum Level{ spdlog::level::info };
   if (severity == GL_DEBUG_SEVERITY_HIGH) {
@@ -39,7 +40,7 @@ spdlog::level::level_enum renderer::GLEnumErrorSeverityToSpdLog(GLenum severity)
   }
   return Level;
 }
-char const *renderer::GetSourceString(GLenum source)
+auto renderer::GetSourceString(GLenum source) -> char const *
 {
   switch (source) {
   case GL_DEBUG_SOURCE_API:

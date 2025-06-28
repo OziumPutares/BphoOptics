@@ -32,6 +32,8 @@ macro(myproject_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
           # Ignores static asserts that are true
           --suppress=knownConditionTrueFalse
           --check-level=exhaustive
+          --suppress=functionStatic
+          --suppress=uninitMemberVar:*spdlog*
           --suppress=${SUPPRESS_DIR})
     else()
       # if the user provides a CPPCHECK_OPTIONS with a template specified, it will override this template

@@ -15,9 +15,8 @@
 #include <renderer/vector/vector.hpp>
 #include <sstream>
 #include <string>
-#include <utility>
 namespace {
-std::string ReadFile(std::filesystem::path const &location)
+auto ReadFile(std::filesystem::path const &location) -> std::string
 {
   std::stringstream TempBuffer;
   TempBuffer << std::ifstream(location).rdbuf();
@@ -135,14 +134,18 @@ int main()
       // NOLINTNEXTLINE
       reinterpret_cast<void *>(sizeof(renderer::Vector3<float>)));
     glEnableVertexAttribArray(1);
-    auto VertexShaderUnit = renderer::gl::ShaderUnit<GL_VERTEX_SHADER>(
-      ReadFile(std::filesystem::current_path() / "glsl"
-               / "newBaseVertexShader.vert.glsl"));
-    auto FragmentShaderUnit = renderer::gl::ShaderUnit<GL_FRAGMENT_SHADER>(
-      ReadFile(std::filesystem::current_path() / "glsl"
-               / "ourColourFragmentShader.frag.glsl"));
-    auto Program = renderer::gl::Program{ std::move(VertexShaderUnit),
-      std::move(FragmentShaderUnit) };
+    auto VertexShaderUnitMaker = []() {
+      return renderer::gl::ShaderUnit<GL_VERTEX_SHADER>(
+        ReadFile(std::filesystem::current_path() / "glsl"
+                 / "newBaseVertexShader.vert.glsl"));
+    };
+    auto FragmentShaderUnitMaker = []() {
+      return renderer::gl::ShaderUnit<GL_FRAGMENT_SHADER>(
+        ReadFile(std::filesystem::current_path() / "glsl"
+                 / "ourColourFragmentShader.frag.glsl"));
+    };
+    auto Program = renderer::gl::Program{ VertexShaderUnitMaker(),
+      FragmentShaderUnitMaker() };
     Program.Use();
 
 
@@ -188,6 +191,7 @@ int main()
     glDeleteVertexArrays(1, &VAO);
 
     // Clean up
+    glfwDestroyWindow(Window);
     glfwTerminate();
     return 0;
   } catch (std::exception const &Err) {

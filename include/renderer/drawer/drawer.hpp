@@ -1,7 +1,10 @@
 #include <GLFW/glfw3.h>
+#include <array>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
 #include <functional>
+#include <iterator>
 #include <renderer/utils/concepts.hpp>
 #include <tuple>
 #include <type_traits>
@@ -26,8 +29,8 @@ public:
   {}
   constexpr Drawer(Drawer const &other) = default;
   constexpr Drawer(Drawer &&) = default;
-  constexpr Drawer &operator=(Drawer const &other) = default;
-  constexpr Drawer &operator=(Drawer &&) = default;
+  constexpr auto operator=(Drawer const &other) -> Drawer & = default;
+  constexpr auto operator=(Drawer &&) -> Drawer & = default;
   constexpr ~Drawer() = default;
   // Draw
   auto Draw(Params... args) -> RetType
@@ -54,6 +57,7 @@ public:
     Drawers<Signature> const &...drawers)
     : m_Drawers(drawer1, drawers...)
   {}
+  // cppcheck-suppress-file functionStatic
   auto Draw(Drawer1<Signature>::ParamType args) -> void
   {
     auto UseDrawers = [&args](auto... drawers) {
@@ -69,5 +73,16 @@ public:
 
 template<typename T, typename Ret, typename... Args>
 concept Drawable = std::same_as<Drawer<Ret(Args...)>, T>;
+template<concepts::signature T, std::size_t Number> class StaticDrawerArray
+{
+  std::array<Drawer<T>, Number> m_Drawers;
+
+public:
+  auto begin() -> decltype(std::begin(m_Drawers))
+  {
+    return std::begin(m_Drawers);
+  }
+  auto end() -> decltype(std::end(m_Drawers)) { return std::end(m_Drawers); }
+};
 
 }// namespace renderer::drawer

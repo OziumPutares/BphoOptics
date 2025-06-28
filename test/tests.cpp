@@ -80,7 +80,7 @@ TEST_CASE("Drawer copy and move constructors/assignment", "[Drawer]")
 TEST_CASE("StaticDrawerSet works with single drawer", "[StaticDrawerSet]")
 {
   int CallCount = 0;
-  renderer::drawer::Drawer<void()> SingleDrawer([&]() { CallCount++; });
+  renderer::drawer::Drawer<void()> const SingleDrawer([&]() { CallCount++; });
 
   renderer::drawer::StaticDrawerSet<void(), renderer::drawer::Drawer> DrawerSet(
     SingleDrawer);
@@ -99,9 +99,9 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with multiple drawers",
   int CallCount2 = 0;
   int CallCount3 = 0;
 
-  renderer::drawer::Drawer<void()> Drawer1([&]() { CallCount1++; });
-  renderer::drawer::Drawer<void()> Drawer2([&]() { CallCount2++; });
-  renderer::drawer::Drawer<void()> Drawer3([&]() { CallCount3++; });
+  renderer::drawer::Drawer<void()> const Drawer1([&]() { CallCount1++; });
+  renderer::drawer::Drawer<void()> const Drawer2([&]() { CallCount2++; });
+  renderer::drawer::Drawer<void()> const Drawer3([&]() { CallCount3++; });
 
   renderer::drawer::StaticDrawerSet<void(),
     renderer::drawer::Drawer,
@@ -128,9 +128,9 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with parameters",
   int Result1 = 0;
   int Result2 = 0;
 
-  renderer::drawer::Drawer<void(int, int)> AddDrawer(
+  renderer::drawer::Drawer<void(int, int)> const AddDrawer(
     [&](int x, int y) { Result1 = x + y; });
-  renderer::drawer::Drawer<void(int, int)> MultiplyDrawer(
+  renderer::drawer::Drawer<void(int, int)> const MultiplyDrawer(
     [&](int x, int y) { Result2 = x * y; });
 
   renderer::drawer::StaticDrawerSet<void(int, int),
@@ -157,11 +157,11 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with single parameter",
   int DoubleResult = 0;
   int CubeResult = 0;
 
-  renderer::drawer::Drawer<void(int)> SquareDrawer(
+  renderer::drawer::Drawer<void(int)> const SquareDrawer(
     [&](int x) { SquareResult = x * x; });
-  renderer::drawer::Drawer<void(int)> DoubleDrawer(
+  renderer::drawer::Drawer<void(int)> const DoubleDrawer(
     [&](int x) { DoubleResult = x * 2; });
-  renderer::drawer::Drawer<void(int)> CubeDrawer(
+  renderer::drawer::Drawer<void(int)> const CubeDrawer(
     [&](int x) { CubeResult = x * x * x; });
 
   renderer::drawer::StaticDrawerSet<void(int),
@@ -189,9 +189,10 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with mixed operations",
   std::string LogOutput;
   int Counter = 0;
 
-  renderer::drawer::Drawer<void(int)> LogDrawer(
+  renderer::drawer::Drawer<void(int)> const LogDrawer(
     [&](int x) { LogOutput += "Logged: " + std::to_string(x) + " "; });
-  renderer::drawer::Drawer<void(int)> CountDrawer([&](int x) { Counter += x; });
+  renderer::drawer::Drawer<void(int)> const CountDrawer(
+    [&](int x) { Counter += x; });
 
   renderer::drawer::StaticDrawerSet<void(int),
     renderer::drawer::Drawer,

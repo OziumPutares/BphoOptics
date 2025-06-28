@@ -6,14 +6,13 @@ Checks: "*,
         -fuchsia-*,
         -google-*,
         -llvm*,
-        -modernize-use-trailing-return-type,
         -zircon-*,
         -readability-else-after-return,
         -readability-static-accessed-through-instance,
         -readability-avoid-const-params-in-decls,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -misc-non-private-member-variables-in-classes,
-"
+        -functionStatic,"
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
@@ -28,6 +27,7 @@ CheckOptions:
   - { key: readability-identifier-naming.StructCase,               value: CamelCase   }
   - { key: readability-identifier-naming.TemplateParameterCase,    value: CamelCase   }
   - { key: readability-identifier-naming.FunctionCase,             value: CamelCase   }
+  - { key: readability-identifier-naming.MethodIgnoredRegexp,      value: 'begin|end|size|swap'   }
   - { key: readability-identifier-naming.VariableCase,             value: CamelCase   }
   - { key: readability-identifier-naming.PrivateMemberPrefix,      value: m_          }
   - { key: readability-identifier-naming.ProtectedMemberPrefix,    value: p_          }
