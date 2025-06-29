@@ -14,13 +14,14 @@ namespace renderer::drawer {
 
 template<typename T> class Drawer;
 
-template<typename... Params> class [[nodiscard]] Drawer<void(Params...)>
+template<typename Ret, typename... Params>
+class [[nodiscard]] Drawer<Ret(Params...)>
 {
-  using Signature = void(Params...);
+  using Signature = Ret(Params...);
   std::function<Signature> m_DrawStrategy;
 
 public:
-  using RetType = void;
+  using RetType = Ret;
   using ParamType = std::tuple<Params...>;
   template<typename Func>
   constexpr explicit Drawer(Func draw_strategy)
@@ -50,6 +51,9 @@ template<concepts::signature Signature,
   template<typename> typename... Drawers>
 class [[nodiscard]] StaticDrawerSet
 {
+  static constexpr std::size_t kNumberOfDrawers = 1 + sizeof...(Drawers);
+  using RetType = typename Drawer1<Signature>::RetType;
+  using ParamTuple = Drawer1<Signature>::ParamType;
   std::tuple<Drawer1<Signature>, Drawers<Signature>...> m_Drawers;
 
 public:
@@ -57,8 +61,8 @@ public:
     Drawers<Signature> const &...drawers)
     : m_Drawers(drawer1, drawers...)
   {}
-  // cppcheck-suppress-file functionStatic
-  auto Draw(Drawer1<Signature>::ParamType args) -> void
+  auto Draw(ParamTuple args) -> void
+    requires(std::same_as<RetType, void>)
   {
     auto UseDrawers = [&args](auto... drawers) {
       (std::apply(
@@ -68,6 +72,26 @@ public:
     (std::apply(
       [&UseDrawers](auto... drawers) { return UseDrawers(drawers...); },
       m_Drawers));
+  }
+  auto Draw(ParamTuple args) -> std::array<RetType, kNumberOfDrawers>
+    requires(!std::same_as<RetType, void>)
+  {
+    std::array<RetType, kNumberOfDrawers> ReturnValues;
+    auto PushBackArray = [Index = 0UZ, &ReturnValues](
+                           auto const &value) mutable {
+      ReturnValues[Index] = value;
+      ++Index;
+    };
+    auto UseDrawers = [&args, &PushBackArray](auto... drawers) {
+      (std::apply([&drawers, &PushBackArray](
+                    auto... params) { PushBackArray(drawers.Draw(params...)); },
+         args),
+        ...);
+    };
+    std::apply(
+      [&UseDrawers](auto... drawers) { return UseDrawers(drawers...); },
+      m_Drawers);
+    return ReturnValues;
   }
 };
 
