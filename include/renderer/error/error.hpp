@@ -1,3 +1,4 @@
+#pragma once
 #include <exception>
 #include <glad/glad.h>
 #include <spdlog/common.h>
@@ -16,7 +17,7 @@ public:
   constexpr explicit CompilationError(std::string_view what) noexcept
     : m_ErrMsg(what.data())
   {}
-  [[nodiscard]] constexpr char const *what() const noexcept override
+  [[nodiscard]] constexpr auto what() const noexcept -> char const * override
   {
     return m_ErrMsg;
   }
@@ -30,14 +31,14 @@ public:
   constexpr explicit UniformError(std::string what) noexcept
     : m_What(std::move(what))
   {}
-  [[nodiscard]] constexpr char const *what() const noexcept override
+  [[nodiscard]] constexpr auto what() const noexcept -> char const * override
   {
     return m_What.data();
   }
 };
 
-char const *GetSourceString(GLenum source);
-char const *GetTypeString(GLenum type);
+auto GetSourceString(GLenum source) -> char const *;
+auto GetTypeString(GLenum type) -> char const *;
 
-spdlog::level::level_enum GLEnumErrorSeverityToSpdLog(GLenum severity);
+auto GLEnumErrorSeverityToSpdLog(GLenum severity) -> spdlog::level::level_enum;
 }// namespace renderer

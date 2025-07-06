@@ -1,10 +1,14 @@
+#pragma once
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <functional>
+#include <initializer_list>
 #include <iterator>
+#include <ranges>
 #include <renderer/utils/concepts.hpp>
 #include <tuple>
 #include <type_traits>
@@ -18,7 +22,7 @@ template<typename Ret, typename... Params>
 class [[nodiscard]] Drawer<Ret(Params...)>
 {
   using Signature = Ret(Params...);
-  std::function<Signature> m_DrawStrategy;
+  std::function<Signature> m_DrawStrategy{};
 
 public:
   using RetType = Ret;
@@ -28,6 +32,7 @@ public:
     requires(std::is_invocable_r_v<RetType, Func, Params...>)
     : m_DrawStrategy(draw_strategy)
   {}
+  Drawer() = default;
   constexpr Drawer(Drawer const &other) = default;
   constexpr Drawer(Drawer &&) = default;
   constexpr auto operator=(Drawer const &other) -> Drawer & = default;
@@ -45,68 +50,97 @@ public:
     m_DrawStrategy(args...);
   }
 };
-
 template<concepts::signature Signature,
-  template<typename> typename Drawer1,
-  template<typename> typename... Drawers>
-class [[nodiscard]] StaticDrawerSet
+  std::size_t Number,
+  template<typename> typename DrawerType = Drawer>
+// requires std::same_as<Drawer<Signature>, DrawerType<Signature>>
+class [[nodiscard]] StaticDrawerSet;
+
+template<typename RetType,
+  typename... ParamType,
+  std::size_t Number,
+  template<typename> typename DrawerType>
+// requires std::same_as<Drawer<Signature>, DrawerType<Signature>>
+class [[nodiscard]] StaticDrawerSet<RetType(ParamType...), Number, DrawerType>
 {
-  static constexpr std::size_t kNumberOfDrawers = 1 + sizeof...(Drawers);
-  using RetType = typename Drawer1<Signature>::RetType;
-  using ParamTuple = Drawer1<Signature>::ParamType;
-  std::tuple<Drawer1<Signature>, Drawers<Signature>...> m_Drawers;
+  using Signature = RetType(ParamType...);
+  std::array<Drawer<Signature>, Number> m_Drawers{};
 
 public:
-  explicit StaticDrawerSet(Drawer1<Signature> const &drawer1,
-    Drawers<Signature> const &...drawers)
-    : m_Drawers(drawer1, drawers...)
-  {}
-  auto Draw(ParamTuple args) -> void
-    requires(std::same_as<RetType, void>)
-  {
-    auto UseDrawers = [&args](auto... drawers) {
-      (std::apply(
-         [&drawers](auto... params) { drawers.Draw(params...); }, args),
-        ...);
-    };
-    (std::apply(
-      [&UseDrawers](auto... drawers) { return UseDrawers(drawers...); },
-      m_Drawers));
-  }
-  auto Draw(ParamTuple args) -> std::array<RetType, kNumberOfDrawers>
-    requires(!std::same_as<RetType, void>)
-  {
-    std::array<RetType, kNumberOfDrawers> ReturnValues;
-    auto PushBackArray = [Index = 0UZ, &ReturnValues](
-                           auto const &value) mutable {
-      ReturnValues[Index] = value;
-      ++Index;
-    };
-    auto UseDrawers = [&args, &PushBackArray](auto... drawers) {
-      (std::apply([&drawers, &PushBackArray](
-                    auto... params) { PushBackArray(drawers.Draw(params...)); },
-         args),
-        ...);
-    };
-    std::apply(
-      [&UseDrawers](auto... drawers) { return UseDrawers(drawers...); },
-      m_Drawers);
-    return ReturnValues;
-  }
-};
-
-template<typename T, typename Ret, typename... Args>
-concept Drawable = std::same_as<Drawer<Ret(Args...)>, T>;
-template<concepts::signature T, std::size_t Number> class StaticDrawerArray
-{
-  std::array<Drawer<T>, Number> m_Drawers;
-
-public:
-  auto begin() -> decltype(std::begin(m_Drawers))
+  constexpr auto begin() noexcept -> decltype(std::begin(m_Drawers))
   {
     return std::begin(m_Drawers);
   }
-  auto end() -> decltype(std::end(m_Drawers)) { return std::end(m_Drawers); }
-};
+  constexpr auto begin() const noexcept -> decltype(std::begin(m_Drawers))
+  {
+    return std::begin(m_Drawers);
+  }
+  constexpr auto cbegin() const noexcept -> decltype(std::begin(m_Drawers))
+  {
+    return std::cbegin(m_Drawers);
+  }
+  constexpr auto end() noexcept -> decltype(std::end(m_Drawers))
+  {
+    return std::end(m_Drawers);
+  }
+  constexpr auto end() const noexcept -> decltype(std::end(m_Drawers))
+  {
+    return std::end(m_Drawers);
+  }
+  constexpr auto cend() const noexcept -> decltype(std::end(m_Drawers))
+  {
+    return std::cend(m_Drawers);
+  }
+  constexpr auto rbegin() noexcept -> decltype(std::rbegin(m_Drawers))
+  {
+    return std::rbegin(m_Drawers);
+  }
+  constexpr auto rbegin() const noexcept -> decltype(std::rbegin(m_Drawers))
+  {
+    return std::rbegin(m_Drawers);
+  }
+  constexpr auto crbegin() const noexcept -> decltype(std::rbegin(m_Drawers))
+  {
+    return std::crbegin(m_Drawers);
+  }
+  constexpr auto rend() noexcept -> decltype(std::rend(m_Drawers))
+  {
+    return std::rend(m_Drawers);
+  }
+  constexpr auto rend() const noexcept -> decltype(std::rend(m_Drawers))
+  {
+    return std::rend(m_Drawers);
+  }
+  constexpr auto crend() const noexcept -> decltype(std::rend(m_Drawers))
+  {
+    return std::crend(m_Drawers);
+  }
+  StaticDrawerSet(std::initializer_list<Drawer<Signature>> list_of_drawers)
+  {
+    std::ranges::copy(list_of_drawers, std::begin(m_Drawers));
+  }
+  constexpr auto operator<=>(StaticDrawerSet const &other) const
+    -> bool = default;
+  constexpr auto Draw(ParamType... params) -> std::array<RetType, Number>
+    requires(!std::same_as<concepts::RetType<Signature>, void>)
+  {
+    std::array<concepts::RetType<Signature>, Number> ReturnValues{};
+    for (auto &[index, drawer] : m_Drawers | std::ranges::views::enumerate) {
+      ReturnValues[index] = drawer.Draw(params...);
+    }
+    return ReturnValues;
+  }
+  constexpr void Draw(ParamType... params)
+    requires(std::same_as<RetType, void>)
+  {
+    std::ranges::for_each(
+      m_Drawers, [&params...](auto &value) { value.Draw(params...); });
+  }
 
+  constexpr void Draw()
+    requires(std::same_as<RetType, void> && std::same_as<void, void>)
+  {
+    std::ranges::for_each(m_Drawers, [](auto &value) { value.Draw(); });
+  }
+};
 }// namespace renderer::drawer

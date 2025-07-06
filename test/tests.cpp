@@ -7,7 +7,6 @@
 #include <spdlog/common.h>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <utility>
 TEST_CASE("Error excceptions", "[std::exception]")
 {
@@ -82,13 +81,11 @@ TEST_CASE("StaticDrawerSet works with single drawer", "[StaticDrawerSet]")
   int CallCount = 0;
   renderer::drawer::Drawer<void()> const SingleDrawer([&]() { CallCount++; });
 
-  renderer::drawer::StaticDrawerSet<void(), renderer::drawer::Drawer> DrawerSet(
-    SingleDrawer);
-
-  DrawerSet.Draw(std::make_tuple());
+  renderer::drawer::StaticDrawerSet<void(), 1> DrawerSet{ SingleDrawer };
+  DrawerSet.Draw();
   REQUIRE((CallCount == 1));
 
-  DrawerSet.Draw(std::make_tuple());
+  DrawerSet.Draw();
   REQUIRE((CallCount == 2));
 }
 
@@ -102,20 +99,21 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with multiple drawers",
   renderer::drawer::Drawer<void()> const Drawer1([&]() { CallCount1++; });
   renderer::drawer::Drawer<void()> const Drawer2([&]() { CallCount2++; });
   renderer::drawer::Drawer<void()> const Drawer3([&]() { CallCount3++; });
+  using Drawer = renderer::drawer::Drawer<void()>;
 
-  renderer::drawer::StaticDrawerSet<void(),
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer>
-    DrawerSet(Drawer1, Drawer2, Drawer3);
+  renderer::drawer::StaticDrawerSet<void(), 3> DrawerSet{
+    Drawer{ [&]() { CallCount1++; } },
+    Drawer{ [&]() { CallCount2++; } },
+    Drawer{ [&]() { CallCount3++; } }
+  };
 
-  DrawerSet.Draw(std::make_tuple());
+  DrawerSet.Draw();
 
   REQUIRE((CallCount1 == 1));
   REQUIRE((CallCount2 == 1));
   REQUIRE((CallCount3 == 1));
 
-  DrawerSet.Draw(std::make_tuple());
+  DrawerSet.Draw();
 
   REQUIRE((CallCount1 == 2));
   REQUIRE((CallCount2 == 2));
@@ -133,18 +131,16 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with parameters",
   renderer::drawer::Drawer<void(int, int)> const MultiplyDrawer(
     [&](int x, int y) { Result2 = x * y; });
 
-  renderer::drawer::StaticDrawerSet<void(int, int),
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer>
-    DrawerSet(AddDrawer, MultiplyDrawer);
+  renderer::drawer::StaticDrawerSet<void(int, int), 2> DrawerSet{ AddDrawer,
+    MultiplyDrawer };
 
-  DrawerSet.Draw(std::make_tuple(3, 4));
+  DrawerSet.Draw(3, 4);
 
   REQUIRE((Result1 == 7));// 3 + 4
   REQUIRE((Result2 == 12));// 3 * 4
 
   // NOLINTNEXTLINE
-  DrawerSet.Draw(std::make_tuple(5, 6));
+  DrawerSet.Draw(5, 6);
 
   REQUIRE((Result1 == 11));// 5 + 6
   REQUIRE((Result2 == 30));// 5 * 6
@@ -164,11 +160,9 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with single parameter",
   renderer::drawer::Drawer<void(int)> const CubeDrawer(
     [&](int x) { CubeResult = x * x * x; });
 
-  renderer::drawer::StaticDrawerSet<void(int),
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer>
-    DrawerSet(SquareDrawer, DoubleDrawer, CubeDrawer);
+  renderer::drawer::StaticDrawerSet<void(int), 3> DrawerSet{
+    SquareDrawer, DoubleDrawer, CubeDrawer
+  };
 
   DrawerSet.Draw(3);
 
@@ -176,7 +170,7 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with single parameter",
   REQUIRE((DoubleResult == 6));// 3*2
   REQUIRE((CubeResult == 27));// 3^3
 
-  DrawerSet.Draw(std::make_tuple(4));
+  DrawerSet.Draw(4);
 
   REQUIRE((SquareResult == 16));// 4^2
   REQUIRE((DoubleResult == 8));// 4*2
@@ -194,10 +188,8 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with mixed operations",
   renderer::drawer::Drawer<void(int)> const CountDrawer(
     [&](int x) { Counter += x; });
 
-  renderer::drawer::StaticDrawerSet<void(int),
-    renderer::drawer::Drawer,
-    renderer::drawer::Drawer>
-    DrawerSet(LogDrawer, CountDrawer);
+  renderer::drawer::StaticDrawerSet<void(int), 2> DrawerSet{ LogDrawer,
+    CountDrawer };
 
   // NOLINTNEXTLINE
   DrawerSet.Draw(5);

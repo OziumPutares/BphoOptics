@@ -11,6 +11,7 @@
 #include <chrono>
 #include <iostream>
 #include <renderer/drawer/drawer.hpp>
+#include <renderer/drawer/openGlDrawer.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/vector/vector.hpp>
 #include <sstream>
@@ -152,9 +153,7 @@ int main()
     // Set initial viewport
     glViewport(0, 0, WindowWidth, WindowHeight);
 
-    using OpenGLDrawer = renderer::drawer::Drawer<void(
-      GLFWwindow const &, std::chrono::nanoseconds)>;
-    OpenGLDrawer ClearDrawer(
+    renderer::OpenGLDrawer ClearDrawer(
       []([[maybe_unused]] GLFWwindow const &window,
         [[maybe_unused]] std::chrono::nanoseconds delta_time) {
         // NOLINTNEXTLINE
@@ -162,7 +161,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
       });
 
-    OpenGLDrawer TriangleDrawer(
+    renderer::OpenGLDrawer TriangleDrawer(
       [&Program, &VAO](GLFWwindow const & /*window*/,
         [[maybe_unused]] std::chrono::nanoseconds delta_time) -> void {
         Program.Use();

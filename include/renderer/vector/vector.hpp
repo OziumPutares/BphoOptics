@@ -1,3 +1,4 @@
+#pragma once
 
 #include <array>
 #include <cstddef>
@@ -21,7 +22,11 @@ template<typename T, std::size_t Dimension> struct Vector
   {
     return m_Values[2];
   };
-  auto W() noexcept -> T &requires(Dimension > 3) { return m_Values[3]; };
+  auto W() noexcept -> T &
+    requires(Dimension > 3)
+  {
+    return m_Values[3];
+  };
 };
 template<typename T, size_t Num> consteval auto VectorDef()
 {
