@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <functional>
@@ -119,6 +120,11 @@ public:
   {
     std::ranges::copy(list_of_drawers, std::begin(m_Drawers));
   }
+  template<typename... Arguments>
+    requires(std::is_constructible_v<Drawer<Signature>, Arguments> && ...)
+  explicit StaticDrawerSet(Arguments... arguments)
+    : m_Drawers{ Drawer<Signature>(arguments)... }
+  {}
   constexpr auto operator<=>(StaticDrawerSet const &other) const
     -> bool = default;
   constexpr auto Draw(ParamType... params) -> std::array<RetType, Number>
@@ -144,3 +150,8 @@ public:
   }
 };
 }// namespace renderer::drawer
+namespace renderer {
+using OpenGLDrawer =
+  renderer::drawer::Drawer<void(GLFWwindow const &, std::chrono::nanoseconds)>;
+
+}

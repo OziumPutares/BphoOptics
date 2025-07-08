@@ -10,7 +10,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <renderer/drawer/drawer.hpp>
 #include <renderer/drawer/openGlDrawer.hpp>
 #include <renderer/shader/shader.hpp>
 #include <renderer/vector/vector.hpp>

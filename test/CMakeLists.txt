@@ -17,7 +17,7 @@ endif()
 
 include(${Catch2_SOURCE_DIR}/extras/Catch.cmake)
 
-add_executable(tests tests.cpp)
+add_executable(tests tests.cpp vertexTests.cpp)
 target_link_libraries(
   tests
   PRIVATE myproject::myproject_warnings

@@ -188,8 +188,10 @@ TEST_CASE("renderer::drawer::StaticDrawerSet works with mixed operations",
   renderer::drawer::Drawer<void(int)> const CountDrawer(
     [&](int x) { Counter += x; });
 
-  renderer::drawer::StaticDrawerSet<void(int), 2> DrawerSet{ LogDrawer,
-    CountDrawer };
+  renderer::drawer::StaticDrawerSet<void(int), 2> DrawerSet{
+    [&](int x) { LogOutput += "Logged: " + std::to_string(x) + " "; },
+    [&](int x) { Counter += x; }
+  };
 
   // NOLINTNEXTLINE
   DrawerSet.Draw(5);
